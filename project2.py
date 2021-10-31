@@ -38,6 +38,7 @@ CV = model_selection.KFold(K, shuffle=True)
 
 # Values of lambda
 lambdas = np.power(10.,(0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5))
+
 # Initialize variables
 #T = len(lambdas)
 Error_train = np.empty((K,1))
@@ -51,15 +52,18 @@ mu = np.empty((K, M-1))
 sigma = np.empty((K, M-1))
 w_noreg = np.empty((M,K))
 
+
 k=0
 for train_index, test_index in CV.split(X,y):
     
     # extract training and test set for current CV fold
+    
     X_train = X[train_index]
     y_train = y[train_index]
     X_test = X[test_index]
     y_test = y[test_index]
-    internal_cross_validation = 10    
+    
+    internal_cross_validation = 3   
     
     
     opt_val_err, opt_lambda, mean_w_vs_lambda, train_err_vs_lambda, test_err_vs_lambda = rlr_validate(X_train, y_train, lambdas, internal_cross_validation)
@@ -84,6 +88,8 @@ for train_index, test_index in CV.split(X,y):
     lambdaI = opt_lambda * np.eye(M)
     lambdaI[0,0] = 0 # Do no regularize the bias term
     w_rlr[:,k] = np.linalg.solve(XtX+lambdaI,Xty).squeeze()
+    
+    
     # Compute mean squared error with regularization with optimal lambda
     Error_train_rlr[k] = np.square(y_train-X_train @ w_rlr[:,k]).sum(axis=0)/y_train.shape[0]
     Error_test_rlr[k] = np.square(y_test-X_test @ w_rlr[:,k]).sum(axis=0)/y_test.shape[0]
@@ -141,10 +147,15 @@ print('- R^2 test:     {0}\n'.format((Error_test_nofeatures.sum()-Error_test_rlr
 print('Weights in last fold:')
 for m in range(M):
     print('{:>15} {:>15}'.format(attributeNames[m], np.round(w_rlr[m,-1],2)))
-    
-pick = 18
-predict = numpy.dot(w_rlr[:,-1],X[pick,:])
-print(int(np.round(predict)))
-print(y[pick])
+
+
+#predict(18)
+def predictvalue(index):
+    predict = numpy.dot(w_rlr[:,-1],X[index,:])
+    print("Prediction: {}".format(int(np.round(predict))))
+    print("Actual: {}".format(int(y[index])))
 
 print('Ran Exercise 8.1.1')
+
+
+
