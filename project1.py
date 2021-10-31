@@ -18,36 +18,40 @@ filename = 'student-mat2.csv'
 df = pd.read_csv(filename, ";")
 
 
-print(round(df.describe(),1))
-# correlation matrix 
-corr = df.corr()
-print(round(corr,1))
+# =============================================================================
+# print(round(df.describe(),1))
+# # correlation matrix 
+# corr = df.corr()
+# print(round(corr,1))
+# =============================================================================
 ###########
 import matplotlib.pyplot as plt 
 import seaborn as sns
 
 
-##############
-df.hist(column=['school','sex','Medu','Fedu','Mjob','Fjob','reason','guardian','traveltime','studytime','failures','schoolsup','famsup','paid','activities','higher','internet','goout','Dalc','Walc','health','absences','G3'],figsize=(10,10))
-plt.savefig('distribution.png',dpi=300,bbox_inches='tight')
-################
-sns.lineplot(df['G3'], df['absences'])
-plt.savefig('lineplot.png',dpi=300,bbox_inches='tight')
-###############
-fig, ax = plt.subplots(figsize=(10,10)) 
-sns.heatmap(round(df.corr(),1), annot=True)
-plt.savefig('heatmap.png',dpi=300,bbox_inches='tight')
-plt.show
+# =============================================================================
+# ##############
+# df.hist(column=['school','sex','Medu','Fedu','Mjob','Fjob','reason','guardian','traveltime','studytime','failures','schoolsup','famsup','paid','activities','higher','internet','goout','Dalc','Walc','health','absences','G3'],figsize=(10,10))
+# plt.savefig('distribution.png',dpi=300,bbox_inches='tight')
+# ################
+# sns.lineplot(df['G3'], df['absences'])
+# plt.savefig('lineplot.png',dpi=300,bbox_inches='tight')
+# ###############
+# fig, ax = plt.subplots(figsize=(10,10)) 
+# sns.heatmap(round(df.corr(),1), annot=True)
+# plt.savefig('heatmap.png',dpi=300,bbox_inches='tight')
+# plt.show
+# =============================================================================
 
 raw_data = df.values  
 
 
 cols = range(0, 26) 
 X = raw_data[:, cols]
-print(X)
+
 
 attributeNames = np.asarray(df.columns[cols])
-print(attributeNames)
+#print(attributeNames)
 
 classLabels = raw_data[:,-1] # -1 takes the last column
 
@@ -61,7 +65,7 @@ classDict = dict(zip(classNames,range(len(classNames))))
 y = np.array([classDict[cl] for cl in classLabels])
 #####groups of grades##########
 y2 = np.array([classDict2[cl] for cl in classLabels])
-print(y2)
+
 
 N, M = X.shape
 
@@ -79,8 +83,8 @@ pca_names = np.concatenate((firsthalfnames,pca_names[6:26]))
 firsthalf = np.concatenate((pca_data[:,0:5], X_num),axis=1)
 pca_data = np.concatenate((firsthalf, pca_data[:,6:26]), axis=1)
 
-print(pca_names)
-print(pca_data.shape)
+#print(pca_names)
+#print(pca_data.shape)
 
 ##FJOB
 X_num, attribute_names = categoric2numeric(pca_data[:,10])
@@ -96,7 +100,7 @@ pca_names = np.concatenate((pca_names[0:15],pca_names[16:34]))
 pca_data = np.concatenate((pca_data[:,0:15], pca_data[:,16:34]), axis=1)
 
 count = 0;
-print(N)
+
 # Bin School
 for i in range(N):
     if (pca_data[i,0]=="GP"):
@@ -174,9 +178,9 @@ firsthalfnames = np.concatenate((pca_names[0:15],attribute_names))
 pca_names = np.concatenate((firsthalfnames,pca_names[16:36]))
 firsthalf = np.concatenate((pca_data[:,0:15], X_num),axis=1)
 pca_data = np.concatenate((firsthalf, pca_data[:,16:36]), axis=1)
-print(pca_names)
 pca_data_noGrades = pca_data[:,0:32]
 pca_names_noGrades = pca_names[0:32]
+y = pca_data[:,34]
 
 df = pd.DataFrame(pca_data, columns=['school', 'sex','age', 'Medu', 'Fedu', 'at_home', 'health', 'other', 'services',
  'teacher', 'F at_home', 'F health', 'F other', 'F services', 'F teacher',
@@ -184,6 +188,8 @@ df = pd.DataFrame(pca_data, columns=['school', 'sex','age', 'Medu', 'Fedu', 'at_
  'paid', 'activities', 'higher', 'internet', 'goout', 'Dalc', 'Walc', 'health',
  'absences', 'G1', 'G2', 'G3'])
 
+    
+    
 #WITHOUT GRADES:
 pca_data = pca_data_noGrades
 pca_names = pca_names_noGrades
@@ -206,18 +212,20 @@ pca_data = pca_data.astype(np.int)
 Y = pca_data - np.ones((N,1))*pca_data.mean(axis=0)
 Y2 = Y*(1/np.std(Y,0))
 
-#####PLOT 1-STANDARD DEVIATION########
-print("______________________________________")
-r = np.arange(1,pca_data.shape[1]+1)
-plt.bar(r, np.std(pca_data,0))
-plt.xticks(r, pca_names, rotation='vertical')
-plt.ylabel('Standard deviation')
-plt.xlabel('Attributes')
-plt.title('Students: attribute standard deviations')
-plt.savefig('std.png',dpi=300,bbox_inches='tight')
-plt.show()
-#####################
-
+# =============================================================================
+# #####PLOT 1-STANDARD DEVIATION########
+# print("______________________________________")
+# r = np.arange(1,pca_data.shape[1]+1)
+# plt.bar(r, np.std(pca_data,0))
+# plt.xticks(r, pca_names, rotation='vertical')
+# plt.ylabel('Standard deviation')
+# plt.xlabel('Attributes')
+# plt.title('Students: attribute standard deviations')
+# plt.savefig('std.png',dpi=300,bbox_inches='tight')
+# plt.show()
+# #####################
+# 
+# =============================================================================
 
 U,S,V = svd(Y2,full_matrices=False)
 
@@ -228,104 +236,114 @@ rho = (S*S) / (S*S).sum()
 # Compute the projection onto the principal components
 Z = U*S;
 ######PLOT 1.5-Projected data#####
-C = len(classGroups)
-for c in range(C):
-    plt.plot(Z[y2==c,0], Z[y2==c,1], '.', alpha=.5)
-plt.xlabel('PC'+str(0+1))
-plt.ylabel('PC'+str(1+1))
-plt.title('Projection' )
-plt.legend(classGroups)
-plt.axis('equal')
-plt.savefig('projection.png',dpi=300,bbox_inches='tight')
+# =============================================================================
+# C = len(classGroups)
+# for c in range(C):
+#     plt.plot(Z[y2==c,0], Z[y2==c,1], '.', alpha=.5)
+# plt.xlabel('PC'+str(0+1))
+# plt.ylabel('PC'+str(1+1))
+# plt.title('Projection' )
+# plt.legend(classGroups)
+# plt.axis('equal')
+# plt.savefig('projection.png',dpi=300,bbox_inches='tight')
+# =============================================================================
 
 
 
 threshold = 0.9
 
 #####PLOT 2-VARIANCE EXPLAINED########
-plt.figure()
-plt.plot(range(1,len(rho)+1),rho,'x-')
-plt.plot(range(1,len(rho)+1),np.cumsum(rho),'o-')
-plt.plot([1,len(rho)],[threshold, threshold],'k--')
-plt.title('Variance explained by principal components');
-plt.xlabel('Principal component');
-plt.ylabel('Variance explained');
-plt.legend(['Individual','Cumulative','Threshold'])
-plt.grid()
-plt.savefig('variance.png',dpi=300,bbox_inches='tight')
-plt.show()
-
+# =============================================================================
+# plt.figure()
+# plt.plot(range(1,len(rho)+1),rho,'x-')
+# plt.plot(range(1,len(rho)+1),np.cumsum(rho),'o-')
+# plt.plot([1,len(rho)],[threshold, threshold],'k--')
+# plt.title('Variance explained by principal components');
+# plt.xlabel('Principal component');
+# plt.ylabel('Variance explained');
+# plt.legend(['Individual','Cumulative','Threshold'])
+# plt.grid()
+# plt.savefig('variance.png',dpi=300,bbox_inches='tight')
+# plt.show()
+# 
+# =============================================================================
 
 #####################PLOT 3-PCA Coefficients#####
 
 
-vt = V.T
-pcs = [0,1]
-legendStrs = ['PC'+str(e+1) for e in pcs]
-bw = .2
-r = np.arange(1,M+1)
-for i in pcs:    
-    plt.bar(r+i*bw, vt[:,i], width=bw)
-plt.xticks(r+bw, pca_names, rotation='vertical')
-plt.xlabel('Attributes')
-plt.ylabel('Component coefficients')
-plt.legend(legendStrs)
-plt.grid()
-plt.title('PCA Component Coefficients')
-plt.savefig('pcomponents.png',dpi=300,bbox_inches='tight')
-plt.show()
+# =============================================================================
+# vt = V.T
+# pcs = [0,1]
+# legendStrs = ['PC'+str(e+1) for e in pcs]
+# bw = .2
+# r = np.arange(1,M+1)
+# for i in pcs:    
+#     plt.bar(r+i*bw, vt[:,i], width=bw)
+# plt.xticks(r+bw, pca_names, rotation='vertical')
+# plt.xlabel('Attributes')
+# plt.ylabel('Component coefficients')
+# plt.legend(legendStrs)
+# plt.grid()
+# plt.title('PCA Component Coefficients')
+# plt.savefig('pcomponents.png',dpi=300,bbox_inches='tight')
+# plt.show()
+# =============================================================================
 
-pcs = [5,6,7,8,9]
-legendStrs = ['PC'+str(e+1) for e in pcs]
-bw = .2
-r = np.arange(1,M+1)
-for i in pcs:    
-    plt.bar(r+i*bw, vt[:,i], width=bw)
-plt.xticks(r+bw, pca_names, rotation='vertical')
-plt.xlabel('Attributes')
-plt.ylabel('Component coefficients')
-plt.legend(legendStrs)
-plt.grid()
-plt.title('PCA Component Coefficients')
-plt.show()
+# =============================================================================
+# pcs = [5,6,7,8,9]
+# legendStrs = ['PC'+str(e+1) for e in pcs]
+# bw = .2
+# r = np.arange(1,M+1)
+# for i in pcs:    
+#     plt.bar(r+i*bw, vt[:,i], width=bw)
+# plt.xticks(r+bw, pca_names, rotation='vertical')
+# plt.xlabel('Attributes')
+# plt.ylabel('Component coefficients')
+# plt.legend(legendStrs)
+# plt.grid()
+# plt.title('PCA Component Coefficients')
+# plt.show()
+# 
+# =============================================================================
 
 
 
-
-#########Similarity school####
-i=0
-noti = list(range(0,2))+list(range(21,27))
-print(pca_names[noti])
-# Compute similarity between image i and all others
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=1
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=21
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=22
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=23
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=24
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=25
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
-i=26
-sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
-print(sim1)
-
+# =============================================================================
+# #########Similarity school####
+# i=0
+# noti = list(range(0,2))+list(range(21,27))
+# print(pca_names[noti])
+# # Compute similarity between image i and all others
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=1
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=21
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=22
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=23
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=24
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=25
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# i=26
+# sim1 = similarity(pca_data[:,i], pca_data[:,noti].T, 'smc')
+# print(sim1)
+# 
+# =============================================================================
 
