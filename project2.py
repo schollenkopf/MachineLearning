@@ -47,6 +47,7 @@ Error_train_rlr = np.empty((K,1))
 Error_test_rlr = np.empty((K,1))
 Error_train_nofeatures = np.empty((K,1))
 Error_test_nofeatures = np.empty((K,1))
+Error_baseline = np.empty((K,1))
 w_rlr = np.empty((M,K))
 mu = np.empty((K, M-1))
 sigma = np.empty((K, M-1))
@@ -91,8 +92,16 @@ for train_index, test_index in CV.split(X,y):
     
     
     # Compute mean squared error with regularization with optimal lambda
+    
     Error_train_rlr[k] = np.square(y_train-X_train @ w_rlr[:,k]).sum(axis=0)/y_train.shape[0]
     Error_test_rlr[k] = np.square(y_test-X_test @ w_rlr[:,k]).sum(axis=0)/y_test.shape[0]
+    
+    mean = np.ones(len(y_test))*np.mean(y_train)
+    se = (mean-y_test)**2 # squared error
+    mse = (sum(se)/len(y_test))
+    
+    Error_baseline[k] = mse
+    
 
     # Estimate weights for unregularized linear regression, on entire training set
     w_noreg[:,k] = np.linalg.solve(XtX,Xty).squeeze()
@@ -143,7 +152,7 @@ print('- Training error: {0}'.format(Error_train_rlr.mean()))
 print('- Test error:     {0}'.format(Error_test_rlr.mean()))
 print('- R^2 train:     {0}'.format((Error_train_nofeatures.sum()-Error_train_rlr.sum())/Error_train_nofeatures.sum()))
 print('- R^2 test:     {0}\n'.format((Error_test_nofeatures.sum()-Error_test_rlr.sum())/Error_test_nofeatures.sum()))
-
+print(Error_baseline.mean())
 print('Weights in last fold:')
 for m in range(M):
     print('{:>15} {:>15}'.format(attributeNames[m], np.round(w_rlr[m,-1],2)))

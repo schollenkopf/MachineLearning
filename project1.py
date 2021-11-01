@@ -209,8 +209,10 @@ N, M = pca_data.shape
 
 pca_data = pca_data.astype(np.int)
 
-Y = pca_data - np.ones((N,1))*pca_data.mean(axis=0)
-Y2 = Y*(1/np.std(Y,0))
+#Y = pca_data - np.ones((N,1))*pca_data.mean(axis=0)
+#Y2 = Y*(1/np.std(Y,0))
+Y2 = pca_data
+
 
 # =============================================================================
 # #####PLOT 1-STANDARD DEVIATION########

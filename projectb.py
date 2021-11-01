@@ -48,7 +48,7 @@ N, M = X.shape
 
 ## Crossvalidation
 # Create crossvalidation partition for evaluation
-K = 4
+K = 10
 CV = model_selection.KFold(K, shuffle=True)
 #CV = model_selection.KFold(K, shuffle=False)
 
@@ -68,18 +68,18 @@ w_noreg = np.empty((M,K))
 
 
 lambdas = np.power(10.,(0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5))
-Array_hidden_units = np.array([1,5,10])
+Array_hidden_units = np.array([1,2,3,4,5])
 
 
 k=0
 
 outerloop_nr = 0
-K2=4
+K2=10
 Error_LR = np.zeros((K2,2))
 Error_ANN = np.zeros((K2,2))
 Error_base = np.zeros((K2,1))
 
-w2 = np.empty((M+1,K,len(lambdas)))
+w2 = np.empty((M+1,K))
 for train_index, test_index in CV.split(X,y):
 
     
@@ -101,10 +101,15 @@ for train_index, test_index in CV.split(X,y):
         
         
         ####NEURAL NETWORK#####
-        X_train_ANN = torch.Tensor(X[train_index2,:])
+        X_train_ANN = torch.Tensor(X[train_index2])
         y_train_ANN = torch.Tensor(y[train_index2])
-        X_test_ANN = torch.Tensor(X[test_index2,:])
+        X_test_ANN = torch.Tensor(X[test_index2])
         y_test_ANN = torch.Tensor(y[test_index2])
+        
+        new_shape = (len(y[train_index2]),1)
+        y_train_ANN = y_train_ANN.view(new_shape)
+        new_shape2 = (len(y[test_index2]),1)
+        y_test_ANN = y_test_ANN.view(new_shape2)
         
         
         for i in range(len(Array_hidden_units)):
@@ -130,7 +135,10 @@ for train_index, test_index in CV.split(X,y):
                                                        n_replicates=1,
                                                        max_iter=10000)
             print('\n\tBest loss: {}\n'.format(final_loss))
+            
             y_test_est = net(X_test_ANN)
+            
+            
             se = (y_test_est.float()-y_test_ANN.float())**2 # squared error
             mse = (torch.sum(se).type(torch.float)/len(y_test_ANN)).data.numpy()
             errors_vs_innerloop[innerloop_nr,i] = mse
@@ -184,47 +192,58 @@ for train_index, test_index in CV.split(X,y):
         
     
     ###Chose best ANN and train it on full x_train####
-    for model in range(len(Array_hidden_units)):
+    for modeln in range(len(Array_hidden_units)):
         ms_ann = 0
         for k in range(K2):
-            ms_ann = ms_ann + (sizes_test2[k]/len(train_index))*errors_vs_innerloop[k,model]
+            ms_ann = ms_ann + (sizes_test2[k]/len(train_index))*errors_vs_innerloop[k,modeln]
             
         print("Chosing best model ANN")
-        print(model)
+        print(modeln)
         print(ms_ann)
-        if (model==0):
-            n = Array_hidden_units[model]
+        if (modeln==0):
+            n = Array_hidden_units[modeln]
             lowest_error = ms_ann
         elif (ms_ann<lowest_error):
-            n = Array_hidden_units[model]
+            n = Array_hidden_units[modeln]
             lowest_error = ms_ann
-            
-    X_train_ANN = torch.Tensor(X[train_index,:])
-    y_train_ANN = torch.Tensor(y[train_index])
-    X_test_ANN = torch.Tensor(X[test_index,:])
-    y_test_ANN = torch.Tensor(y[test_index])
+    
+    
+    X_train_ANN2 = torch.Tensor(X[train_index])
+    y_train_ANN2 = torch.Tensor(y[train_index])
+    X_test_ANN2 = torch.Tensor(X[test_index])
+    y_test_ANN2 = torch.Tensor(y[test_index])
+    
+    new_shape = (len(y[train_index]),1)
+    y_train_ANN2 = y_train_ANN2.view(new_shape)
+    new_shape2 = (len(y[test_index]),1)
+    y_test_ANN2 = y_test_ANN2.view(new_shape2)
+    
+    
+    
     print("Best Model: {}".format(n))
     model = lambda: torch.nn.Sequential(
                     torch.nn.Linear(M, n), #M features to n_hidden_units
                     torch.nn.Tanh(), # 1st transfer function,
-                    torch.nn.Linear(n,n),
-                    torch.nn.Tanh(),
                     torch.nn.Linear(n, 1), # n_hidden_units to 1 output neuron
                     # no final tranfer function, i.e. "linear output"
                     )
+
     loss_fn = torch.nn.MSELoss()
-    net, final_loss, learning_curve = train_neural_net(model,
+    net2, final_loss, learning_curve = train_neural_net(model,
                                                    loss_fn,
-                                                   X=X_train_ANN,
-                                                   y=y_train_ANN,
+                                                   X=X_train_ANN2,
+                                                   y=y_train_ANN2,
                                                    n_replicates=1,
                                                    max_iter=10000)
-    y_test_est = net(X_test_ANN)
-    se = (y_test_est.float()-y_test_ANN.float())**2 # squared error
-    mse = (torch.sum(se).type(torch.float)/len(y_test_ANN)).data.numpy()
+    y_test_est2 = net2(X_test_ANN2)
+
+    
+    se = (y_test_est2.float()-y_test_ANN2.float())**2 # squared error
+    mse = (torch.sum(se).type(torch.float)/len(y_test_ANN2)).data.numpy()
+    
     Error_ANN[outerloop_nr,0] = n
     Error_ANN[outerloop_nr,1] = mse
-
+    print(Error_ANN)
     ###Chose best LR and train it on full x_train###
     for la in range(len(lambdas)):
         ms_lr = 0
@@ -248,6 +267,7 @@ for train_index, test_index in CV.split(X,y):
     y_test_LR = y[test_index]
         
     X_train_LR = np.concatenate((np.ones((X_train_LR.shape[0],1)),X_train_LR),1)
+    
     X_test_LR = np.concatenate((np.ones((X_test_LR.shape[0],1)),X_test_LR),1)
     # Standardize the training and set set based on training set moments
     mu = np.mean(X_train_LR[:, 1:], 0)
@@ -262,10 +282,10 @@ for train_index, test_index in CV.split(X,y):
     
     lambdaI = lambda_ * np.eye(M+1)
     lambdaI[0,0] = 0 # remove bias regularization
-    w2[:,outerloop_nr,l] = np.linalg.solve(XtX+lambdaI,Xty).squeeze()
+    w2[:,outerloop_nr] = np.linalg.solve(XtX+lambdaI,Xty).squeeze()
     
     Error_LR[outerloop_nr,0] = lambda_
-    Error_LR[outerloop_nr,1] = np.power(y_test_LR-X_test_LR @ w[:,outerloop_nr,l].T,2).mean(axis=0)
+    Error_LR[outerloop_nr,1] = np.power(y_test_LR-X_test_LR @ w2[:,outerloop_nr].T,2).mean(axis=0)
     
         
     ###BaseModel####
