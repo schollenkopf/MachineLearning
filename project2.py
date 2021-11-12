@@ -80,6 +80,7 @@ subplot(1,2,1)
 semilogx(lambdas,mean_w_vs_lambda.T[:,1:],'.-') # Don't plot the bias term
 xlabel('Regularization factor')
 ylabel('Mean Coefficient Values')
+plt.savefig('coeff.png',dpi=300,bbox_inches='tight')
 grid()
         # You can choose to display the legend, but it's omitted for a cleaner 
         # plot, since there are many attributes
@@ -91,7 +92,9 @@ loglog(lambdas,train_err_vs_lambda.T,'b.-',lambdas,test_err_vs_lambda.T,'r.-')
 xlabel('Regularization factor')
 ylabel('Squared error (crossvalidation)')
 legend(['Train error','Validation error'])
+plt.savefig('curve2.png',dpi=300,bbox_inches='tight')
 grid()
+
 
 
 show()
@@ -99,7 +102,20 @@ show()
 print('Weights in last fold:')
 for m in range(M):
     print('{:>15} {:>15}'.format(attributeNames[m], np.round(w_rlr[m],2)))
+    
 
+
+bw = .2
+r = np.arange(1,M)
+
+plt.bar(r+i*bw, w_rlr[1:], width=bw)
+plt.xticks(r+bw, attributeNames[1:], rotation='vertical')
+plt.xlabel('Attributes')
+plt.ylabel('Weight coefficients')
+plt.grid()
+plt.title('Linear Regression Weights')
+plt.savefig('weights.png',dpi=300,bbox_inches='tight')
+plt.show()
 
 #predict(18)
 def predictvalue(index):

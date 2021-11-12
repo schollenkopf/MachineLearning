@@ -274,7 +274,7 @@ threshold = 0.9
 
 
 # =============================================================================
-# vt = V.T
+vt = V.T
 # pcs = [0,1]
 # legendStrs = ['PC'+str(e+1) for e in pcs]
 # bw = .2
@@ -292,19 +292,19 @@ threshold = 0.9
 # =============================================================================
 
 # =============================================================================
-# pcs = [5,6,7,8,9]
-# legendStrs = ['PC'+str(e+1) for e in pcs]
-# bw = .2
-# r = np.arange(1,M+1)
-# for i in pcs:    
-#     plt.bar(r+i*bw, vt[:,i], width=bw)
-# plt.xticks(r+bw, pca_names, rotation='vertical')
-# plt.xlabel('Attributes')
-# plt.ylabel('Component coefficients')
-# plt.legend(legendStrs)
-# plt.grid()
-# plt.title('PCA Component Coefficients')
-# plt.show()
+pcs = [1]
+legendStrs = ['PC'+str(e+1) for e in pcs]
+bw = .2
+r = np.arange(1,M+1)
+for i in pcs:    
+    plt.bar(r+i*bw, vt[:,i], width=bw)
+plt.xticks(r+bw, pca_names, rotation='vertical')
+plt.xlabel('Attributes')
+plt.ylabel('Component coefficients')
+plt.legend(legendStrs)
+plt.grid()
+plt.title('PCA Component Coefficients')
+plt.show()
 # 
 # =============================================================================
 
