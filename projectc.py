@@ -30,6 +30,14 @@ import torch
 from toolbox_02450 import train_neural_net, draw_neural_net
 from scipy import stats
 
+from warnings import simplefilter
+# ignore all future warnings
+simplefilter(action='ignore', category=FutureWarning)
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from toolbox_02450 import rocplot, confmatplot
 ##dataset:
 y = np.array(y, copy=False, subok=True, ndmin=2).T
 X = np.append(X,y,axis=1)
@@ -59,7 +67,7 @@ N, M = X.shape
 
 ## Crossvalidation
 # Create crossvalidation partition for evaluation
-K = 5
+K = 10
 CV = model_selection.KFold(K, shuffle=True)
 #CV = model_selection.KFold(K, shuffle=False)
 
@@ -82,7 +90,7 @@ Array_hidden_units = np.array([1,2,3,4,5,7])
 k=0
 
 outerloop_nr = 0
-K2=5
+K2=10
 Error_LR = np.zeros((K,2))
 Error_KNN = np.zeros((K,2))
 Error_base = np.zeros((K,1))
@@ -129,28 +137,21 @@ for train_index, test_index in CV.split(X,y):
         X_test_LR = X[test_index2]
         y_test_LR = y[test_index2]
         
-        X_train_LR = np.concatenate((np.ones((X_train_LR.shape[0],1)),X_train_LR),1)
-        X_test_LR = np.concatenate((np.ones((X_test_LR.shape[0],1)),X_test_LR),1)
-        # Standardize the training and set set based on training set moments
-        mu = np.mean(X_train_LR[:, 1:], 0)
-        sigma = np.std(X_train_LR[:, 1:], 0)
+        #X_train_LR = np.concatenate((np.ones((X_train_LR.shape[0],1)),X_train_LR),1)
+        #X_test_LR = np.concatenate((np.ones((X_test_LR.shape[0],1)),X_test_LR),1)
         
-        X_train_LR[:, 1:] = (X_train_LR[:, 1:] - mu) / sigma
-        X_test_LR[:, 1:] = (X_test_LR[:, 1:] - mu) / sigma
-        
-        # precompute terms
-        Xty = X_train_LR.T @ y_train_LR
-        XtX = X_train_LR.T @ X_train_LR
         
         for l in range(0,len(lambdas)):
-            # Compute parameters for current value of lambda and current CV fold
-            # note: "linalg.lstsq(a,b)" is substitue for Matlab's left division operator "\"
-            lambdaI = lambdas[l] * np.eye(M+1)
-            lambdaI[0,0] = 0 # remove bias regularization
-            w[:,innerloop_nr,l] = np.linalg.solve(XtX+lambdaI,Xty).squeeze()
+            mdl = LogisticRegression(penalty='l2', C=1/lambdas[l] )
     
-            errors_vs_innerloop_LR[innerloop_nr,l] = np.power(y_test_LR-X_test_LR @ w[:,innerloop_nr,l].T,2).mean(axis=0)
-    
+            mdl.fit(X_train_LR, y_train_LR)
+
+            y_train_est = mdl.predict(X_train_LR).T
+            y_test_est = mdl.predict(X_test_LR).T
+
+            
+            errors_vs_innerloop_LR[innerloop_nr,l] = np.sum(y_test_est != y_test) / len(y_test)
+
 
         innerloop_nr = innerloop_nr + 1
         
@@ -185,7 +186,7 @@ for train_index, test_index in CV.split(X,y):
     
     Error_KNN[outerloop_nr,0] = np.round(best)
     Error_KNN[outerloop_nr,1] = err
-    print(Error_KNN)
+  
     ###Chose best LR and train it on full x_train###
     for la in range(len(lambdas)):
         ms_lr = 0
@@ -198,33 +199,23 @@ for train_index, test_index in CV.split(X,y):
         elif (ms_lr<lowest_error_LR):
             lambda_ = lambdas[la]
             lowest_error_LR = ms_lr
-    
+    print("Best Model LR: {}".format(lambda_) )
     
     X_train_LR = X[train_index]
     y_train_LR = y[train_index]
     X_test_LR = X[test_index]
     y_test_LR = y[test_index]
         
-    X_train_LR = np.concatenate((np.ones((X_train_LR.shape[0],1)),X_train_LR),1)
+    #X_train_LR = np.concatenate((np.ones((X_train_LR.shape[0],1)),X_train_LR),1)
+    #X_test_LR = np.concatenate((np.ones((X_test_LR.shape[0],1)),X_test_LR),1)
     
-    X_test_LR = np.concatenate((np.ones((X_test_LR.shape[0],1)),X_test_LR),1)
-    # Standardize the training and set set based on training set moments
-    mu = np.mean(X_train_LR[:, 1:], 0)
-    sigma = np.std(X_train_LR[:, 1:], 0)
-        
-    X_train_LR[:, 1:] = (X_train_LR[:, 1:] - mu) / sigma
-    X_test_LR[:, 1:] = (X_test_LR[:, 1:] - mu) / sigma
-        
-    # precompute terms
-    Xty = X_train_LR.T @ y_train_LR
-    XtX = X_train_LR.T @ X_train_LR
-    
-    lambdaI = lambda_ * np.eye(M+1)
-    lambdaI[0,0] = 0 # remove bias regularization
-    w2[:,outerloop_nr] = np.linalg.solve(XtX+lambdaI,Xty).squeeze()
+    mdl = LogisticRegression(penalty='l2', C=1/lambda_ )
+    mdl.fit(X_train_LR, y_train_LR)
+    y_train_est = mdl.predict(X_train_LR).T
+    y_test_est = mdl.predict(X_test_LR).T
     
     Error_LR[outerloop_nr,0] = lambda_
-    Error_LR[outerloop_nr,1] = np.power(y_test_LR-X_test_LR @ w2[:,outerloop_nr].T,2).mean(axis=0)
+    Error_LR[outerloop_nr,1] = np.sum(y_test_est != y_test) / len(y_test)
     
         
     ###BaseModel####
@@ -248,6 +239,10 @@ for train_index, test_index in CV.split(X,y):
     
     
     outerloop_nr = outerloop_nr + 1
+    print(str((outerloop_nr/K)*100) + "% done")
+    
+    
+print("____________________RESULTS:_____________")
 print(Error_KNN)
 print(Error_LR)
 print(Error_base)
