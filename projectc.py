@@ -95,6 +95,16 @@ Error_LR = np.zeros((K,2))
 Error_KNN = np.zeros((K,2))
 Error_base = np.zeros((K,1))
 
+
+vector_true = np.array([])
+vector_base = np.array([])
+vector_lr = np.array([])
+vector_knn = np.array([])
+
+
+
+
+
 w2 = np.empty((M+1,K))
 for train_index, test_index in CV.split(X,y):
 
@@ -164,6 +174,7 @@ for train_index, test_index in CV.split(X,y):
     X_test = X[test_index,:]
     y_test = y[test_index]
     
+    vector_true = np.append(vector_true,y_test)
     
     
     for l in range(1,L+1):
@@ -182,7 +193,7 @@ for train_index, test_index in CV.split(X,y):
     knclassifier.fit(X_train, y_train);
     y_est = knclassifier.predict(X_test);
     err = (np.sum(y_est!=y_test))/len(y_test)
-
+    vector_knn = np.append(vector_knn,y_est)
     
     Error_KNN[outerloop_nr,0] = np.round(best)
     Error_KNN[outerloop_nr,1] = err
@@ -213,7 +224,7 @@ for train_index, test_index in CV.split(X,y):
     mdl.fit(X_train_LR, y_train_LR)
     y_train_est = mdl.predict(X_train_LR).T
     y_test_est = mdl.predict(X_test_LR).T
-    
+    vector_lr = np.append(vector_lr,y_test_est)
     Error_LR[outerloop_nr,0] = lambda_
     Error_LR[outerloop_nr,1] = np.sum(y_test_est != y_test) / len(y_test)
     
@@ -227,10 +238,13 @@ for train_index, test_index in CV.split(X,y):
         else:
             female = female +1
     if (male>female):
+        val = 0
         err = (np.sum(0!=y_test))/len(y_test)
     else:
+        val = 1
         err = (np.sum(1!=y_test))/len(y_test)
-    
+    print(val)
+    vector_base = np.append(vector_base,np.ones(len(y_test))*val)
     Error_base[outerloop_nr] = err
     
     
@@ -247,5 +261,8 @@ print(Error_KNN)
 print(Error_LR)
 print(Error_base)
     
-    
-  
+print("____________________Vectors:_____________")
+print(vector_lr)
+print(vector_knn)
+print(vector_base)
+print(vector_true)
